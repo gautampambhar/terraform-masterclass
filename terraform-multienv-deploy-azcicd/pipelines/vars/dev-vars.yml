@@ -1,0 +1,6 @@
+variables:
+  environment: dev
+  backendServiceArm: 'tf-dev-sc'
+  backendAzureRmSubscriptionId: 'Your Azure Subscription ID'
+  backendAzureRmResourceGroupName: 'tf-dev-rg'
+  backendAzureRmStorageAccountName: 'tfdevtbackendfiles'

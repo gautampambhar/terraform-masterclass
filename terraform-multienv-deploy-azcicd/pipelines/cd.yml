@@ -1,0 +1,103 @@
+trigger: none
+pr: none
+
+pool:
+  vmImage: windows-latest
+
+stages:
+- stage: terraform_dev
+  displayName: Prepare Terraform and Validate Code
+  variables:
+  - template: ./vars/dev-vars.yml
+  jobs:
+  - job:
+    continueOnError: false
+    steps:
+    - template: ./steps/terraform-install.yml
+    - task: TerraformCLI@0
+      inputs:
+        command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform'
+        commandOptions: '-var-file="environments/$(environment)/$(environment).tfvars"'
+        backendType: 'azurerm'
+        backendServiceArm: 'tf-dev-sc' #'$(backendServiceArm)'
+        backendAzureRmSubscriptionId: '$(backendAzureRmSubscriptionId)'
+        ensureBackend: true
+        backendAzureRmResourceGroupName: '$(backendAzureRmResourceGroupName)'
+        backendAzureRmResourceGroupLocation: 'eastus'
+        backendAzureRmStorageAccountName: '$(backendAzureRmStorageAccountName)'
+        backendAzureRmContainerName: 'terraform'
+        backendAzureRmKey: '$(environment)-tfstate'
+        allowTelemetryCollection: true
+    - task: TerraformCLI@0
+      displayName: Terraform validate
+      inputs:
+        command: 'validate'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform'
+        environmentServiceName: 'tf-dev-sc' # '$(backendServiceArm)'
+        allowTelemetryCollection: false
+    - task: TerraformCLI@0
+      displayName: Terraform plan
+      inputs:
+        command: 'plan'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform'
+        environmentServiceName: 'tf-dev-sc'
+        allowTelemetryCollection: false
+        commandOptions: '-var-file="environments/$(environment)/$(environment).tfvars"'
+    - task: TerraformCLI@0
+      displayName: Terraform apply
+      inputs:
+        command: 'apply'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform'
+        environmentServiceName: 'tf-dev-sc'
+        commandOptions: '-var-file="environments/$(environment)/$(environment).tfvars"'
+        allowTelemetryCollection: false
+- stage: terraform_prod
+  dependsOn: terraform_dev
+  condition: succeeded('terraform_dev')
+  displayName: Prepare Terraform and Validate Code
+  variables:
+  - template: ./vars/prod-vars.yml
+  jobs:
+  - job:
+    continueOnError: false
+    steps:
+    - template: ./steps/terraform-install.yml
+    - task: TerraformCLI@0
+      inputs:
+        command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform'
+        commandOptions: '-var-file="environments/$(environment)/$(environment).tfvars"'
+        backendType: 'azurerm'
+        backendServiceArm: 'tf-prod-sc' #'$(backendServiceArm)'
+        backendAzureRmSubscriptionId: '$(backendAzureRmSubscriptionId)'
+        ensureBackend: true
+        backendAzureRmResourceGroupName: '$(backendAzureRmResourceGroupName)'
+        backendAzureRmResourceGroupLocation: 'eastus'
+        backendAzureRmStorageAccountName: '$(backendAzureRmStorageAccountName)'
+        backendAzureRmContainerName: 'terraform'
+        backendAzureRmKey: '$(environment)-tfstate'
+        allowTelemetryCollection: true
+    - task: TerraformCLI@0
+      displayName: Terraform validate
+      inputs:
+        command: 'validate'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform'
+        environmentServiceName: 'tf-prod-sc' # '$(backendServiceArm)'
+        allowTelemetryCollection: false
+    - task: TerraformCLI@0
+      displayName: Terraform plan
+      inputs:
+        command: 'plan'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform'
+        environmentServiceName: 'tf-prod-sc'
+        allowTelemetryCollection: false
+        commandOptions: '-var-file="environments/$(environment)/$(environment).tfvars"'
+    - task: TerraformCLI@0
+      displayName: Terraform apply
+      inputs:
+        command: 'apply'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/terraform'
+        environmentServiceName: 'tf-prod-sc'
+        commandOptions: '-var-file="environments/$(environment)/$(environment).tfvars"'
+        allowTelemetryCollection: false

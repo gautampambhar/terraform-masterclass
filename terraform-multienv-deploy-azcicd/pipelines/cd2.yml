@@ -1,0 +1,134 @@
+trigger: none
+pr: none
+
+pool:
+  vmImage: windows-latest
+
+stages:
+- stage: terraform_build
+  jobs:
+  - job: build
+    steps:
+    - task: CopyFiles@2
+      inputs:
+          SourceFolder: 'terraform'
+          Contents: '**'
+          TargetFolder: '$(Build.ArtifactStagingDirectory)'
+      displayName: 'Copy Artifacts'
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathToPublish: $(Build.ArtifactStagingDirectory)
+        artifactName: tfBuildFiles
+
+- stage: terraform_dev
+  dependsOn: terraform_build
+  displayName: "Terraform dev deploy"
+  variables:
+  - template: ./vars/dev-vars.yml
+  jobs:
+  - deployment: Terraform_Dev_Deploy
+    displayName: terraform_dev_deploy
+    # creates an environment if it doesn't exist  
+    environment: 'tf-dev'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current 
+            artifact: tfBuildFiles
+          - checkout: self
+          - template: ./steps/terraform-install.yml
+          - task: TerraformCLI@0
+            inputs:
+              command: 'init'
+              workingDirectory: '$(Pipeline.Workspace)/tfBuildFiles'
+              commandOptions: '-var-file="environments/$(environment)/$(environment).tfvars"'
+              backendType: 'azurerm'
+              backendServiceArm: 'tf-dev-sc' #'$(backendServiceArm)'
+              backendAzureRmSubscriptionId: '$(backendAzureRmSubscriptionId)'
+              ensureBackend: true
+              backendAzureRmResourceGroupName: '$(backendAzureRmResourceGroupName)'
+              backendAzureRmResourceGroupLocation: 'eastus'
+              backendAzureRmStorageAccountName: '$(backendAzureRmStorageAccountName)'
+              backendAzureRmContainerName: 'terraform'
+              backendAzureRmKey: '$(environment)-tfstate'
+              allowTelemetryCollection: true
+          - task: TerraformCLI@0
+            displayName: Terraform validate
+            inputs:
+              command: 'validate'
+              workingDirectory: '$(Pipeline.Workspace)/tfBuildFiles'
+              environmentServiceName: 'tf-dev-sc' # '$(backendServiceArm)'
+              allowTelemetryCollection: false
+          - task: TerraformCLI@0
+            displayName: Terraform plan
+            inputs:
+              command: 'plan'
+              workingDirectory: '$(Pipeline.Workspace)/tfBuildFiles'
+              environmentServiceName: 'tf-dev-sc'
+              allowTelemetryCollection: false
+              commandOptions: '-var-file="environments/$(environment)/$(environment).tfvars"'
+          - task: TerraformCLI@0
+            displayName: Terraform apply
+            inputs:
+              command: 'apply'
+              workingDirectory: '$(Pipeline.Workspace)/tfBuildFiles'
+              environmentServiceName: 'tf-dev-sc'
+              commandOptions: '-var-file="environments/$(environment)/$(environment).tfvars"'
+              allowTelemetryCollection: false
+
+- stage: terraform_prod
+  displayName: "Terraform prod deploy"
+  variables:
+  - template: ./vars/prod-vars.yml
+  jobs:
+  - deployment: Terraform_Prod_Deploy
+    displayName: terraform_prod_deploy
+    # creates an environment if it doesn't exist  
+    environment: 'tf-prod'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current 
+            artifact: tfBuildFiles
+          - checkout: self
+          - template: ./steps/terraform-install.yml
+          - task: TerraformCLI@0
+            inputs:
+              command: 'init'
+              workingDirectory: '$(Pipeline.Workspace)/tfBuildFiles'
+              commandOptions: '-var-file="environments/$(environment)/$(environment).tfvars"'
+              backendType: 'azurerm'
+              backendServiceArm: 'tf-prod-sc' #'$(backendServiceArm)'
+              backendAzureRmSubscriptionId: '$(backendAzureRmSubscriptionId)'
+              ensureBackend: true
+              backendAzureRmResourceGroupName: '$(backendAzureRmResourceGroupName)'
+              backendAzureRmResourceGroupLocation: 'eastus'
+              backendAzureRmStorageAccountName: '$(backendAzureRmStorageAccountName)'
+              backendAzureRmContainerName: 'terraform'
+              backendAzureRmKey: '$(environment)-tfstate'
+              allowTelemetryCollection: true
+          - task: TerraformCLI@0
+            displayName: Terraform validate
+            inputs:
+              command: 'validate'
+              workingDirectory: '$(Pipeline.Workspace)/tfBuildFiles'
+              environmentServiceName: 'tf-prod-sc' # '$(backendServiceArm)'
+              allowTelemetryCollection: false
+          - task: TerraformCLI@0
+            displayName: Terraform plan
+            inputs:
+              command: 'plan'
+              workingDirectory: '$(Pipeline.Workspace)/tfBuildFiles'
+              environmentServiceName: 'tf-prod-sc'
+              allowTelemetryCollection: false
+              commandOptions: '-var-file="environments/$(environment)/$(environment).tfvars"'
+          - task: TerraformCLI@0
+            displayName: Terraform apply
+            inputs:
+              command: 'apply'
+              workingDirectory: '$(Pipeline.Workspace)/tfBuildFiles'
+              environmentServiceName: 'tf-prod-sc'
+              commandOptions: '-var-file="environments/$(environment)/$(environment).tfvars"'
+              allowTelemetryCollection: false

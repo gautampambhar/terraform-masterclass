@@ -1,0 +1,5 @@
+location="eastus"
+rg-name="tf-prod-azweb-rg"
+storage-account-name="proddemowebsite"
+index_document="index.html"
+source_content="<h1>This is static content coming from the Production Terraform</h1>"

@@ -1,0 +1,47 @@
+# Configuration
+# -------------
+
+export AZ_GOVDEMO_RG_NAME=tf-demo-rg
+export AZ_GOVDEMO_STORAGEACCT_NAME=tfdemotfbackendsa  # must be globally unique
+export AZ_GOVDEMO_LOCATION=eastus
+
+
+# Resource Group
+# --------------
+# Create a dedicated resource group
+# Configurable: name, location
+az group create \
+	--name $AZ_GOVDEMO_RG_NAME \
+	--location $AZ_GOVDEMO_LOCATION
+
+
+# Storage Account
+# ---------------
+# This holds your actual Terraform state file
+# Note: we explicitly disable public access.
+
+az storage account create \
+	--name $AZ_GOVDEMO_STORAGEACCT_NAME \
+	--resource-group $AZ_GOVDEMO_RG_NAME \
+	--kind StorageV2 \
+	--sku Standard_LRS \
+	--https-only true \
+	--allow-blob-public-access false \
+	--tags "demo=tf"
+
+# Blobs always need a parent container, so we'll create one
+az storage container create \
+	--name terraform \
+	--account-name $AZ_GOVDEMO_STORAGEACCT_NAME \
+	--public-acces off \
+	--auth-mode login
+
+# Shared Access Signature
+# Instead of using the access key, we will create a SAS token that expires in 7 days
+#az storage account generate-sas \
+#  --permissions cdlruwap \
+#  --account-name $AZ_GOVDEMO_STORAGEACCT_NAME \
+#  --services b \
+#  --resource-types sco  \
+#  --expiry $(date -v+7d '+%Y-%m-%dT%H:%MZ') \
+#  -o tsv

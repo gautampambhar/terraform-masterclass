@@ -1,0 +1,6 @@
+location="eastus"
+rg-name="tf-resources-dev-rg"
+storage-account-name="devdemowebsite"
+index_document="index.html"
+source_content="<h1>This is static content coming from the Dev Terraform</h1>"
+environment="dev"

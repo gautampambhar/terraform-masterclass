@@ -1,0 +1,6 @@
+variables:
+  environment: prod
+  backendServiceArm: 'tf-prod-sc'
+  backendAzureRmSubscriptionId: 'Your Azure Subscription ID'
+  backendAzureRmResourceGroupName: 'tf-prod-rg'
+  backendAzureRmStorageAccountName: 'tfprodbackendfiles'
