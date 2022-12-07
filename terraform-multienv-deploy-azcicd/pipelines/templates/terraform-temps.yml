@@ -1,0 +1,60 @@
+parameters:
+- name: serviceConnection
+  type: string
+- name: environment
+  type: string
+
+jobs:
+  - deployment: Terraform_${{parameters.environment}}_Deploy
+    displayName: terraform_${{parameters.environment}}_deploy
+    # creates an environment if it doesn't exist  
+    environment: 'tf-${{parameters.environment}}'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current 
+            artifact: tfBuildFiles
+          - checkout: self
+          - task: ms-devlabs.custom-terraform-tasks.custom-terraform-installer-task.TerraformInstaller@0
+            displayName: Install Terraform
+            inputs:
+              terraformVersion: 'latest'
+          - task: TerraformCLI@0
+            inputs:
+              command: 'init'
+              workingDirectory: '$(Pipeline.Workspace)/tfBuildFiles'
+              commandOptions: '-var-file="environments/$(environment)/$(environment).tfvars"'
+              backendType: 'azurerm'
+              backendServiceArm: ${{parameters.serviceConnection}}
+              backendAzureRmSubscriptionId: '$(backendAzureRmSubscriptionId)'
+              ensureBackend: true
+              backendAzureRmResourceGroupName: '$(backendAzureRmResourceGroupName)'
+              backendAzureRmResourceGroupLocation: 'eastus'
+              backendAzureRmStorageAccountName: '$(backendAzureRmStorageAccountName)'
+              backendAzureRmContainerName: 'terraform'
+              backendAzureRmKey: '$(environment)-tfstate'
+              allowTelemetryCollection: true
+          - task: TerraformCLI@0
+            displayName: Terraform validate
+            inputs:
+              command: 'validate'
+              workingDirectory: '$(Pipeline.Workspace)/tfBuildFiles'
+              environmentServiceName: ${{parameters.serviceConnection}} 
+              allowTelemetryCollection: false
+          - task: TerraformCLI@0
+            displayName: Terraform plan
+            inputs:
+              command: 'plan'
+              workingDirectory: '$(Pipeline.Workspace)/tfBuildFiles'
+              environmentServiceName: ${{parameters.serviceConnection}}
+              allowTelemetryCollection: false
+              commandOptions: '-var-file="environments/$(environment)/$(environment).tfvars"'
+          - task: TerraformCLI@0
+            displayName: Terraform apply
+            inputs:
+              command: 'apply'
+              workingDirectory: '$(Pipeline.Workspace)/tfBuildFiles'
+              environmentServiceName: ${{parameters.serviceConnection}}
+              commandOptions: '-var-file="environments/$(environment)/$(environment).tfvars"'
+              allowTelemetryCollection: false

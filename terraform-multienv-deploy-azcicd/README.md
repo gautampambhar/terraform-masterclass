@@ -9,6 +9,9 @@ To keep it simple, the project deploys blob storage with static files in it. but
 # Goal
 The goal of the project is to write Azure resources in terraform and deploy them automatically via the Azure YAML pipeline with multiple environments.
 
+# Prerequisite 
+- On your Azure DevOps project, navigate to marketplace store and install Azure Pipelines Terraform Tasks
+
 # Resource creation manually before pipeline execution 
 1. run terraform/backends/setup.azcli. This will create below resources
     1. Resource group
@@ -23,6 +26,9 @@ The goal of the project is to write Azure resources in terraform and deploy them
     - Azure subscription --> IAM --> Role assignement --> add --> role assignement --> select service principal
 4. Create service connection manually 
     - give details including app secret 
+    - Service Principal Id: Enter SP's Application Client ID
+    - Service principal key: enter SP (config & secret) --> Value(no secret ID)
+    - Tenant ID: enter SP Value
 5. Create a key vault(optional) only if you want to store the below values in the Azure variable group and not in YAML variable templates (This project stored variables in the pipelines/vars/{env}-vars.yml)
     - add 6 varibale and it's value - environment, backendServiceArm, backendAzureRmSubscriptionId, backendAzureRmResourceGroupName, backendAzureRmStorageAccountName
     - navigate to keyvault --> access policy --> create --> add service principal Get & List secret permission
@@ -53,7 +59,4 @@ Find the Azure YAML pipeline file in the pipelines/ directory
 
 1. cd.yml file is the old way of doing YAML deployment
 2. cd2.yml file is the new way of YAML deployment where you can utilize approvals on stage(add approval before the production stage execution)
-
-# Prerequisite 
-- On your Azure DevOps project, navigate to marketplace store and install Azure Pipelines Terraform Tasks
 
