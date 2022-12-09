@@ -21,5 +21,16 @@ The examples in this repo range from the very basics of creating an ec2 instance
 4. What happens if a resource was created successfully in terraform but failed during provisioning?
 - **the resource is marked as tainted** and can be recreated by restarting the terraform run.
 
+5. Terraform Import 
+- to import resources that are created manually 
+- you need to terraform init before import
+- you can only import one resource at a time
+- you need to fill in values for the resource after import and before the plan and apply stages
+- steps:
+    1. create empty resource block in your .tf file
+    2. import resource 
+    3. add values into your resource block
+    4. apply changes and chage state
+
 ## Important quetions 
 https://geekflare.com/terraform-interview-questions-and-answers/
