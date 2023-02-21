@@ -1,0 +1,2 @@
+# Export outputs/Attribute reference
+**what**: all the terraform resources outputs bunch of attributes reference. such as, id, arn. which can then be passed to another resources by having attributes reference.

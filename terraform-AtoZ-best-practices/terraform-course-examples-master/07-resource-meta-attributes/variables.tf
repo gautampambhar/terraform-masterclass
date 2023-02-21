@@ -4,7 +4,7 @@ variable "cidr_range" {
 }
 
 #Subnet Map
-variable "subnet _map" {
+variable "subnet_map" {
     type = map
 }
 
@@ -14,6 +14,6 @@ variable "nic_list" {
 }
 
 #Storage check
-variable "strage _check" {
+variable "strage_check" {
     type = string
 }

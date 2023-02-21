@@ -26,7 +26,7 @@ stages:
   variables:
   - template: ./vars/dev-vars.yml
   jobs:
-  - template: templates/deploy-law.yml
+  - template: templates/terraform-temps.yml
     parameters:
       serviceConnection: 'tf-dev-sc'
 
@@ -36,6 +36,6 @@ stages:
   variables:
   - template: ./vars/prod-vars.yml
   jobs:
-  - template: templates/deploy-law.yml
+  - template: templates/terraform-temps.yml
     parameters:
       serviceConnection: 'tf-prod-sc'
